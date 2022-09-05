@@ -1,4 +1,4 @@
-package toolkit
+package gotoolkit
 
 import "crypto/rand"
 
