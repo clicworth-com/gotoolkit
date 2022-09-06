@@ -284,7 +284,6 @@ func (t *Tools) WriteJSON(w http.ResponseWriter, status int,data any, headers ..
 	return nil
 }
 
-
 func (t *Tools) ErrorJSON(w http.ResponseWriter, err error, status ...int) error {
 	statusCode := http.StatusBadRequest
 
