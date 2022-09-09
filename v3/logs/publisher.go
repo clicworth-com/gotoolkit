@@ -9,18 +9,6 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type LogPayload struct {
-	Service string `json:"service"`
-	Data string `json:"data"`
-}
-
-type LogPublisher struct {
-	connection *amqp.Connection
-	logInfoLevelEnabled bool
-	logWarningLevelEnabled bool
-	logErrorLevelEnabled bool
-}
-
 func (l *LogPublisher) SetLogLevel(level uint) {
 	switch level {
 	case 0:
@@ -76,7 +64,7 @@ func (l *LogPublisher) LogERROR(serviceName,data string) {
 }
 
 func (l *LogPublisher) pushToQueue(serviceName, msg, severity string) error {
-	err := l.setup()
+	err := setup(l.connection)
 	if err != nil {
 		return err
 	}
@@ -84,6 +72,7 @@ func (l *LogPublisher) pushToQueue(serviceName, msg, severity string) error {
 	payload := LogPayload{
 		Service:serviceName,
 		Data: msg,
+		LogLevel: severity,
 	}
 
 	j, _ := json.Marshal(&payload)
@@ -93,27 +82,6 @@ func (l *LogPublisher) pushToQueue(serviceName, msg, severity string) error {
 	}
 
 	return nil
-}
-
-func (l *LogPublisher) setup() error {
-	channel, err := l.connection.Channel()
-	if err != nil {
-		return err
-	}
-	defer channel.Close()
-	return l.declareExchange(channel)
-}
-
-func (l *LogPublisher) declareExchange(ch *amqp.Channel) error {
-	return ch.ExchangeDeclare(
-		"logs_topic", //name
-		"topic", //type
-		true, //durable
-		false, //auto-delete
-		false, //internal
-		false, // no-wait
-		nil, //arguments
-	)
 }
 
 func (l *LogPublisher) push(event string, severity string) error {

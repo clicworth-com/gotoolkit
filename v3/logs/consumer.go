@@ -1,27 +1,25 @@
 package logs
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
-	"log-service/data"
-	"net/http"
+	"time"
 
-	"github.com/clicworth-com/gotoolkit"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type LogConsumer struct {
-	conn *amqp.Connection
-	queueName string
-}
-
-func NewConsumer(conn *amqp.Connection) (LogConsumer, error) {
+func NewConsumer(conn *amqp.Connection, mongo *mongo.Client) (LogConsumer, error) {
 	consumer := LogConsumer{
-		conn: conn,
+		connection: conn,
+		client: mongo,
+		database: mongo.Database("logs"),
+		collection: mongo.Database("logs").Collection("logs"),
 	}
 
-	err := consumer.setup()
+	err := setup(consumer.connection)
 	if err != nil {
 		return LogConsumer{}, err
 	}
@@ -29,22 +27,9 @@ func NewConsumer(conn *amqp.Connection) (LogConsumer, error) {
 	return consumer, nil
 }
 
-func (consumer *LogConsumer) setup() error {
-	channel, err := consumer.conn.Channel()
-	if err != nil {
-		return err
-	}
-
-	return declareExchange(channel)
-}
-
-// type Payload struct {
-// 	Name string `json:"name"`
-// 	Data string `json:"data"`
-// }
-
-func (consumer *LogConsumer) Listen(topics []string) error {
-	ch, err := consumer.conn.Channel()
+func (consumer *LogConsumer) Listen() error {
+	topics := []string{"log.INFO", "log.WARNING", "log.ERROR"}
+	ch, err := consumer.connection.Channel()
 	if err != nil {
 		return err
 	}
@@ -81,7 +66,7 @@ func (consumer *LogConsumer) Listen(topics []string) error {
 			var payload LogPayload
 			_ = json.Unmarshal(d.Body, &payload)
 
-			go handlePayload(payload)
+			go consumer.handlePayload(payload)
 		}
 	}()
 
@@ -91,68 +76,34 @@ func (consumer *LogConsumer) Listen(topics []string) error {
 	return nil
 }
 
-func handlePayload(payload Payload)  {
-	switch payload.Name {
-	case "log","event":
-		// log whatever we get
-		err := logEvent(payload)
-		if err != nil {
-			log.Println(err)
-		}
-	default:
-		err := logEvent(payload)
-		if err != nil {
-			log.Println(err)
-		}
-	}
-	
-}
-
-func WriteLog(w http.ResponseWriter, r *http.Request) {
-	var tools gotoolkit.Tools
-	// read json into var
-	var requestPayload JSONPayload
-	_ = tools.ReadJSON(w, r, &requestPayload)
-
+func (consumer *LogConsumer) handlePayload(payload LogPayload)  {
 	// insert data
-	event := data.LogEntry{
-		Name: requestPayload.Name,
-		Data: requestPayload.Data,
+	logEntry := LogEntry{
+		Service: payload.Service,
+		Data: payload.Data,
+		LogLevel: payload.LogLevel,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
-	err := app.Models.LogEntry.Insert(event)
+	err := consumer.insert(logEntry)
 	if err != nil {
-		tools.ErrorJSON(w, err)
 		return
 	}
+}
 
-	resp := gotoolkit.JSONResponse{
-		Error: false,
-		Message: "logged",
+func (consumer *LogConsumer) insert(entry LogEntry) error {
+	_, err := consumer.collection.InsertOne(context.TODO(), LogEntry{
+		Service: entry.Service,
+		Data: entry.Data,
+		LogLevel: entry.LogLevel,
+		CreatedAt: entry.CreatedAt,
+		UpdatedAt: entry.UpdatedAt,
+	})
+	if err != nil {
+		log.Println("Error inserting into logs: ",err)
+		return err
 	}
 
-	tools.WriteJSON(w, http.StatusAccepted, resp)
-}
-
-func declareExchange(ch *amqp.Channel) error {
-	return ch.ExchangeDeclare(
-		"logs_topic", //name
-		"topic", //type
-		true, //durable
-		false, //auto-delete
-		false, //internal
-		false, // no-wait
-		nil, //arguments
-	)
-}
-
-func declareRandomeQueue(ch *amqp.Channel) (amqp.Queue, error) {
-	return ch.QueueDeclare(
-		"", //name
-		false, //durable
-		false, //delete when unsued ?
-		true, // exclisive
-		false, //no-wait?
-		nil, //arguments
-	)
+	return nil
 }
