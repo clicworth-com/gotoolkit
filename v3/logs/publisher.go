@@ -101,10 +101,10 @@ func (l *LogPublisher) setup() error {
 		return err
 	}
 	defer channel.Close()
-	return declareExchange(channel)
+	return l.declareExchange(channel)
 }
 
-func declareExchange(ch *amqp.Channel) error {
+func (l *LogPublisher) declareExchange(ch *amqp.Channel) error {
 	return ch.ExchangeDeclare(
 		"logs_topic", //name
 		"topic", //type
