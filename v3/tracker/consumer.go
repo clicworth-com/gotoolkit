@@ -30,19 +30,23 @@ func NewConsumer(conn *amqp.Connection, mongo *mongo.Client) (TrackerConsumer, e
 }
 
 func (consumer *TrackerConsumer) Listen() error {
+	log.Println("TrackerConsumer inside Listen")
 	topics := []string{CWType, SearchType}
 	ch, err := consumer.connection.Channel()
 	if err != nil {
+		log.Printf("TrackerConsumer channel error %s", err)
 		return err
 	}
 	defer ch.Close()
 
 	q, err := declareRandomeQueue(ch)
 	if err != nil {
+		log.Printf("TrackerConsumer declareRandomeQueue error %s", err)
 		return err
 	}
 
 	for _, s := range topics {
+		log.Printf("binding with Queue %s",s)
 		ch.QueueBind(
 			q.Name,
 			s,
@@ -50,15 +54,15 @@ func (consumer *TrackerConsumer) Listen() error {
 			false,
 			nil,
 		)
-
 		if err != nil {
+			log.Printf("TrackerConsumer QueueBind error %s", err)
 			return err
 		}
-
 	}
 
 	messages, err := ch.Consume(q.Name, "", true, false, false, false, nil)
 	if err != nil {
+		log.Printf("TrackerConsumer Consume	 error %s", err)
 		return err
 	}
 
@@ -67,7 +71,7 @@ func (consumer *TrackerConsumer) Listen() error {
 		for d:= range messages {
 			var payload TrackerPayload
 			_ = json.Unmarshal(d.Body, &payload)
-
+			log.Printf("TrackerConsumer Received Message  %s", payload.Type)
 			go consumer.handlePayload(payload)
 		}
 	}()
@@ -79,6 +83,7 @@ func (consumer *TrackerConsumer) Listen() error {
 }
 
 func (consumer *TrackerConsumer) handlePayload(payload TrackerPayload)  {
+	log.Println("TrackerConsumer inside handlePayload")
 	// insert data
 	if payload.Type == SearchType{
 		trackerEntry := TrackerEntry{
@@ -102,6 +107,7 @@ func (consumer *TrackerConsumer) handlePayload(payload TrackerPayload)  {
 	}
 		err := consumer.insertSearchEntry(trackerEntry)
 		if err != nil {
+			log.Printf("TrackerConsumer insertSearchEntry error %s", err)
 			return
 		}
 	}else if payload.Type == CWType {
@@ -132,6 +138,7 @@ func (consumer *TrackerConsumer) handlePayload(payload TrackerPayload)  {
 	}
 		err := consumer.insertCWEntry(trackerEntry)
 		if err != nil {
+			log.Printf("TrackerConsumer insertCWEntry error %s", err)
 			return
 		}
 	}
