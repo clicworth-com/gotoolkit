@@ -41,6 +41,7 @@ func (t *TrackerPublisher) pushToQueue(tp *TrackerPayload,topic string) error {
 	}
 
 	j, _ := json.Marshal(tp)
+	log.Printf("TrackerPublisher event %s",string(j))
 	err = t.push(string(j),topic)
 	if err != nil {
 		log.Printf("TrackerPublisher pushToQueue push error %s", err)
