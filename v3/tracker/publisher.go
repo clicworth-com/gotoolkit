@@ -33,7 +33,7 @@ func (t *TrackerPublisher) TrackUserCW(tp *TrackerPayload) {
 }
 
 func (t *TrackerPublisher) pushToQueue(tp *TrackerPayload,topic string) error {
-	log.Println("TrackerPublisher inside pushToQueue")
+	log.Printf("TrackerPublisher inside pushToQueue %s",topic)
 	err := setup(t.connection)
 	if err != nil {
 		log.Printf("TrackerPublisher pushToQueue setup error %s", err)

@@ -83,28 +83,28 @@ func (consumer *TrackerConsumer) Listen() error {
 }
 
 func (consumer *TrackerConsumer) handlePayload(payload TrackerPayload)  {
-	log.Println("TrackerConsumer inside handlePayload")
+	log.Printf("TrackerConsumer inside handlePayload %s",payload.Type)
 	// insert data
 	if payload.Type == SearchType{
 		trackerEntry := TrackerEntry{
-		Bid : payload.Bid,
-		Type : payload.Type,
-		Phone : payload.Phone,
-		Name : payload.Name,
-		Email : payload.Email,
-		UtmSource : payload.UtmSource,
-		UtmMedium : payload.UtmMedium,
-		UtmCampaignId : payload.UtmCampaignId,
-		UtmCampaignName : payload.UtmCampaignName,
-		Address : payload.Address,
-		IpAddress : payload.IpAddress,
-		City : payload.City,
-		CbSearchListSize : payload.CbSearchListSize,
-		GoSearchListSize : payload.GoSearchListSize,
-		TotalSearchListSize : payload.TotalSearchListSize,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now().Unix(),
-	}
+			Bid : payload.Bid,
+			Type : payload.Type,
+			Phone : payload.Phone,
+			Name : payload.Name,
+			Email : payload.Email,
+			UtmSource : payload.UtmSource,
+			UtmMedium : payload.UtmMedium,
+			UtmCampaignId : payload.UtmCampaignId,
+			UtmCampaignName : payload.UtmCampaignName,
+			Address : payload.Address,
+			IpAddress : payload.IpAddress,
+			City : payload.City,
+			CbSearchListSize : payload.CbSearchListSize,
+			GoSearchListSize : payload.GoSearchListSize,
+			TotalSearchListSize : payload.TotalSearchListSize,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now().Unix(),
+		}
 		err := consumer.insertSearchEntry(trackerEntry)
 		if err != nil {
 			log.Printf("TrackerConsumer insertSearchEntry error %s", err)
@@ -112,30 +112,30 @@ func (consumer *TrackerConsumer) handlePayload(payload TrackerPayload)  {
 		}
 	}else if payload.Type == CWType {
 		trackerEntry := TrackerEntry{
-		Bid : payload.Bid,
-		Type : payload.Type,
-		Phone : payload.Phone,
-		Name : payload.Name,
-		Email : payload.Email,
-		UtmSource : payload.UtmSource,
-		UtmMedium : payload.UtmMedium,
-		UtmCampaignId : payload.UtmCampaignId,
-		UtmCampaignName : payload.UtmCampaignName,
-		Lat : payload.Lat,
-		Lng : payload.Lng,
-		FloorNumber : payload.FloorNumber,
-		TotalPrice : payload.TotalPrice,
-		PricePerSqFt : payload.PricePerSqFt,
-		AreaInSqft : payload.AreaInSqft,
-		Address : payload.Address,
-		IpAddress : payload.IpAddress,
-		City : payload.City,
-		CbSearchListSize : payload.CbSearchListSize,
-		GoSearchListSize : payload.GoSearchListSize,
-		TotalSearchListSize : payload.TotalSearchListSize,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now().Unix(),
-	}
+			Bid : payload.Bid,
+			Type : payload.Type,
+			Phone : payload.Phone,
+			Name : payload.Name,
+			Email : payload.Email,
+			UtmSource : payload.UtmSource,
+			UtmMedium : payload.UtmMedium,
+			UtmCampaignId : payload.UtmCampaignId,
+			UtmCampaignName : payload.UtmCampaignName,
+			Lat : payload.Lat,
+			Lng : payload.Lng,
+			FloorNumber : payload.FloorNumber,
+			TotalPrice : payload.TotalPrice,
+			PricePerSqFt : payload.PricePerSqFt,
+			AreaInSqft : payload.AreaInSqft,
+			Address : payload.Address,
+			IpAddress : payload.IpAddress,
+			City : payload.City,
+			CbSearchListSize : payload.CbSearchListSize,
+			GoSearchListSize : payload.GoSearchListSize,
+			TotalSearchListSize : payload.TotalSearchListSize,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now().Unix(),
+		}
 		err := consumer.insertCWEntry(trackerEntry)
 		if err != nil {
 			log.Printf("TrackerConsumer insertCWEntry error %s", err)
@@ -145,7 +145,7 @@ func (consumer *TrackerConsumer) handlePayload(payload TrackerPayload)  {
 }
 
 func (consumer *TrackerConsumer) insertCWEntry(entry TrackerEntry) error {
-	  
+	  log.Println("TrackerConsumer inside insertCWEntry ")
 	_, err := consumer.cwCollection.InsertOne(context.TODO(), TrackerEntry{
 		Bid : entry.Bid,
 		Type : entry.Type,
@@ -180,7 +180,7 @@ func (consumer *TrackerConsumer) insertCWEntry(entry TrackerEntry) error {
 }
 
 func (consumer *TrackerConsumer) insertSearchEntry(entry TrackerEntry) error {
-	  
+	log.Println("TrackerConsumer inside insertSearchEntry ")
 	filter := bson.D{{Key:"bid", Value:entry.Bid}}
 	filter = append(filter, bson.E{Key: "updated_at",Value: bson.D{
 			{Key: "$gte",Value: time.Now().Unix() - 20}, 
@@ -189,7 +189,9 @@ func (consumer *TrackerConsumer) insertSearchEntry(entry TrackerEntry) error {
 	var result TrackerEntry
 	err := consumer.searchCollection.FindOne(context.TODO(), filter).Decode(&result)
 	if err != nil {
+		log.Printf("TrackerConsumer inside insertSearchEntry FiindOne %s",err)
 		if err == mongo.ErrNoDocuments {
+			log.Println("TrackerConsumer inside ErrNoDocuments")
 			_, err = consumer.searchCollection.InsertOne(context.TODO(), TrackerEntry{
 				Bid : entry.Bid,
 				Type : entry.Type,
