@@ -11,11 +11,9 @@ import (
 
 func (t *TrackerPublisher) SetAMQPConnection(connection *amqp.Connection) {
 	t.connection = connection
-	log.Println("TrackerPublisher SetAMQPConnection success")
 }
 
 func (t *TrackerPublisher) TrackUserSearch(tp *TrackerPayload) {
-	log.Println("TrackerPublisher inside TrackUserSearch")
 	err := t.pushToQueue(tp,SearchType)
 	if err != nil {
 		log.Printf("Track User Search Publisher Error: %s\n", err)
@@ -24,7 +22,6 @@ func (t *TrackerPublisher) TrackUserSearch(tp *TrackerPayload) {
 }
 
 func (t *TrackerPublisher) TrackUserCW(tp *TrackerPayload) {
-	log.Println("TrackerPublisher inside TrackUserCW")
 	err := t.pushToQueue(tp,CWType)
 	if err != nil {
 		log.Printf("Track User CW Publisher Error: %s\n", err)
@@ -33,7 +30,6 @@ func (t *TrackerPublisher) TrackUserCW(tp *TrackerPayload) {
 }
 
 func (t *TrackerPublisher) pushToQueue(tp *TrackerPayload,topic string) error {
-	log.Printf("TrackerPublisher inside pushToQueue %s",topic)
 	err := setup(t.connection)
 	if err != nil {
 		log.Printf("TrackerPublisher pushToQueue setup error %s", err)
@@ -41,7 +37,6 @@ func (t *TrackerPublisher) pushToQueue(tp *TrackerPayload,topic string) error {
 	}
 
 	j, _ := json.Marshal(tp)
-	log.Printf("TrackerPublisher event %s",string(j))
 	err = t.push(string(j),topic)
 	if err != nil {
 		log.Printf("TrackerPublisher pushToQueue push error %s", err)
@@ -52,15 +47,12 @@ func (t *TrackerPublisher) pushToQueue(tp *TrackerPayload,topic string) error {
 }
 
 func  (t *TrackerPublisher) push(event string,topic string) error {
-	log.Println("TrackerPublisher inside push")
 	channel, err := t.connection.Channel()
 	if err != nil {
 		log.Printf("TrackerPublisher push Channel error %s", err)
 		return err
 	}
 	defer channel.Close()
-
-	log.Println("Pushing to channel")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()

@@ -1,7 +1,6 @@
 package tracker
 
 import (
-	"log"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -75,7 +74,6 @@ type TrackerEntry struct {
 }
 
 func setup(conn *amqp.Connection) error {
-	log.Println("inside setup")
 	channel, err := conn.Channel()
 	if err != nil {
 		return err
@@ -85,7 +83,6 @@ func setup(conn *amqp.Connection) error {
 }
 
 func declareExchange(ch *amqp.Channel) error {
-	log.Println("inside declareExchange")
 	return ch.ExchangeDeclare(
 		"tracker_topic", //name
 		"topic", //type

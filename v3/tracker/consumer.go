@@ -30,7 +30,6 @@ func NewConsumer(conn *amqp.Connection, mongo *mongo.Client) (TrackerConsumer, e
 }
 
 func (consumer *TrackerConsumer) Listen() error {
-	log.Println("TrackerConsumer inside Listen")
 	topics := []string{CWType, SearchType}
 	ch, err := consumer.connection.Channel()
 	if err != nil {
@@ -46,7 +45,6 @@ func (consumer *TrackerConsumer) Listen() error {
 	}
 
 	for _, s := range topics {
-		log.Printf("binding with Queue %s",s)
 		ch.QueueBind(
 			q.Name,
 			s,
@@ -71,7 +69,6 @@ func (consumer *TrackerConsumer) Listen() error {
 		for d:= range messages {
 			var payload TrackerPayload
 			_ = json.Unmarshal(d.Body, &payload)
-			log.Printf("TrackerConsumer Received Message  %s", payload.Type)
 			go consumer.handlePayload(payload)
 		}
 	}()
@@ -83,7 +80,6 @@ func (consumer *TrackerConsumer) Listen() error {
 }
 
 func (consumer *TrackerConsumer) handlePayload(payload TrackerPayload)  {
-	log.Printf("TrackerConsumer inside handlePayload %s",payload.Type)
 	// insert data
 	if payload.Type == SearchType{
 		trackerEntry := TrackerEntry{
@@ -145,7 +141,6 @@ func (consumer *TrackerConsumer) handlePayload(payload TrackerPayload)  {
 }
 
 func (consumer *TrackerConsumer) insertCWEntry(entry TrackerEntry) error {
-	  log.Println("TrackerConsumer inside insertCWEntry ")
 	_, err := consumer.cwCollection.InsertOne(context.TODO(), TrackerEntry{
 		Bid : entry.Bid,
 		Type : entry.Type,
@@ -180,7 +175,6 @@ func (consumer *TrackerConsumer) insertCWEntry(entry TrackerEntry) error {
 }
 
 func (consumer *TrackerConsumer) insertSearchEntry(entry TrackerEntry) error {
-	log.Println("TrackerConsumer inside insertSearchEntry ")
 	filter := bson.D{{Key:"bid", Value:entry.Bid}}
 	filter = append(filter, bson.E{Key: "updated_at",Value: bson.D{
 			{Key: "$gte",Value: time.Now().Unix() - 20}, 
@@ -189,9 +183,7 @@ func (consumer *TrackerConsumer) insertSearchEntry(entry TrackerEntry) error {
 	var result TrackerEntry
 	err := consumer.searchCollection.FindOne(context.TODO(), filter).Decode(&result)
 	if err != nil {
-		log.Printf("TrackerConsumer inside insertSearchEntry FiindOne %s",err)
 		if err == mongo.ErrNoDocuments {
-			log.Println("TrackerConsumer inside ErrNoDocuments")
 			_, err = consumer.searchCollection.InsertOne(context.TODO(), TrackerEntry{
 				Bid : entry.Bid,
 				Type : entry.Type,
@@ -228,7 +220,7 @@ func (consumer *TrackerConsumer) insertSearchEntry(entry TrackerEntry) error {
 		_, err := consumer.searchCollection.UpdateOne(context.TODO(), newFilter, update)
 		if err != nil {
 			log.Println("Error Updating user search entry: ",err)
-				return err
+			return err
 		}
 	}
 	return nil
