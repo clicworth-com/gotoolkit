@@ -17,12 +17,12 @@ import (
 
 const randomStringSource = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_+-"
 
-// Tools is the type to instantitate this module. Any varialee of this type will havee access 
+// Tools is the type to instantitate this module. Any varialee of this type will havee access
 // to all the methods with the receiver *Tools
-type Tools struct{
-	MaxFileSize int
-	AllowedFileTypes []string
-	MaxJSONSize int
+type Tools struct {
+	MaxFileSize        int
+	AllowedFileTypes   []string
+	MaxJSONSize        int
 	AllowUnknownFields bool
 }
 
@@ -32,7 +32,7 @@ func (t *Tools) RandomString(n int) string {
 	s, r := make([]rune, n), []rune(randomStringSource)
 	for i := range s {
 		p, _ := rand.Prime(rand.Reader, len(r))
-		x , y := p.Uint64(), uint64(len(r))
+		x, y := p.Uint64(), uint64(len(r))
 		s[i] = r[x%y]
 	}
 
@@ -132,12 +132,11 @@ func (t *Tools) UploadFiles(r *http.Request, uploadDir string, rename ...bool) (
 				} else {
 					uploadedFile.NewFileName = hdr.Filename
 				}
-				
+
 				uploadedFile.OriginalFileName = hdr.Filename
 
 				var outfile *os.File
 				defer outfile.Close()
-
 
 				if outfile, err = os.Create(filepath.Join(uploadDir, uploadedFile.NewFileName)); err != nil {
 					return nil, err
@@ -197,9 +196,9 @@ func (t *Tools) DownloadStaticFile(w http.ResponseWriter, r *http.Request, pathN
 }
 
 type JSONResponse struct {
-	Error bool `json:"error"`
+	Error   bool   `json:"error"`
 	Message string `json:"message"`
-	Data any `json:"data,omitempty"`
+	Data    any    `json:"data,omitempty"`
 }
 
 func (t *Tools) ReadJSON(w http.ResponseWriter, r *http.Request, data any) error {
@@ -260,9 +259,9 @@ func (t *Tools) ReadJSON(w http.ResponseWriter, r *http.Request, data any) error
 	}
 
 	return nil
-} 
+}
 
-func (t *Tools) WriteJSON(w http.ResponseWriter, status int,data any, headers ...http.Header) error {
+func (t *Tools) WriteJSON(w http.ResponseWriter, status int, data any, headers ...http.Header) error {
 	out, err := json.Marshal(data)
 	if err != nil {
 		return err
@@ -275,7 +274,7 @@ func (t *Tools) WriteJSON(w http.ResponseWriter, status int,data any, headers ..
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	_,err = w.Write(out)
+	_, err = w.Write(out)
 	if err != nil {
 		return err
 	}
@@ -294,7 +293,7 @@ func (t *Tools) ErrorJSON(w http.ResponseWriter, err error, status ...int) error
 	payload.Error = true
 	payload.Message = err.Error()
 
-	return t.WriteJSON(w, statusCode,payload)
+	return t.WriteJSON(w, statusCode, payload)
 }
 
 // PushJSONToRemote posts arbitrary data to some URL as JSON, and returns the response, status code, and error, if any.
@@ -331,32 +330,42 @@ func (t *Tools) PushJSONToRemote(uri string, data interface{}, client ...*http.C
 }
 
 func (t *Tools) GetIP(r *http.Request) (string, error) {
-    //Get IP from the X-REAL-IP header
-    ip := r.Header.Get("X-REAL-IP")
-    netIP := net.ParseIP(ip)
-    if netIP != nil {
-        return ip, nil
-    }
+	//Get IP from the X-REAL-IP header
+	ip := r.Header.Get("X-REAL-IP")
+	netIP := net.ParseIP(ip)
+	if netIP != nil {
+		return ip, nil
+	}
 
-    //Get IP from X-FORWARDED-FOR header
-    ips := r.Header.Get("X-FORWARDED-FOR")
-    splitIps := strings.Split(ips, ",")
-    for _, ip := range splitIps {
-        netIP := net.ParseIP(ip)
-        if netIP != nil {
-            return ip, nil
-        }
-    }
+	//Get IP from X-FORWARDED-FOR header
+	ips := r.Header.Get("X-FORWARDED-FOR")
+	splitIps := strings.Split(ips, ",")
+	for _, ip := range splitIps {
+		netIP := net.ParseIP(ip)
+		if netIP != nil {
+			return ip, nil
+		}
+	}
 
-    //Get IP from RemoteAddr
-    ip, _, err := net.SplitHostPort(r.RemoteAddr)
-    if err != nil {
-        return "", err
-    }
-    netIP = net.ParseIP(ip)
-    if netIP != nil {
-        return ip, nil
-    }
-    return "", fmt.Errorf("no valid ip found")
+	//Get IP from RemoteAddr
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return "", err
+	}
+	netIP = net.ParseIP(ip)
+	if netIP != nil {
+		return ip, nil
+	}
+	return "", fmt.Errorf("no valid ip found")
 }
 
+func (t *Tools) IsDigit(s string) bool {
+	r := true
+	for _, c := range s {
+		if c < '0' || c > '9' {
+			r = false
+			break
+		}
+	}
+	return r
+}
