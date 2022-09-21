@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package predict;
+
+option go_package = "/predict";
+
+message Predict{
+    double lat = 1;
+    double lng = 2;
+    int32 floorNumber = 3;
+    int32 registryYear = 4;
+}
+
+message PredictRequest {
+    Predict propInfo = 1;
+}
+
+message PredictResponse {
+    float ppsf = 1;
+}
+
+service PredictService {
+    rpc PredictPPSF(PredictRequest) returns (PredictResponse);
+}
