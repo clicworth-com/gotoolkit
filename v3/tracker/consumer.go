@@ -14,11 +14,11 @@ import (
 
 func NewConsumer(conn *amqp.Connection, mongo *mongo.Client) (TrackerConsumer, error) {
 	consumer := TrackerConsumer{
-		connection: conn,
-		client: mongo,
-		database: mongo.Database("tracker"),
+		connection:       conn,
+		client:           mongo,
+		database:         mongo.Database("tracker"),
 		searchCollection: mongo.Database("tracker").Collection("search"),
-		cwCollection: mongo.Database("tracker").Collection("clicworth"),
+		cwCollection:     mongo.Database("tracker").Collection("clicworth"),
 	}
 
 	err := setup(consumer.connection)
@@ -65,8 +65,8 @@ func (consumer *TrackerConsumer) Listen() error {
 	}
 
 	forever := make(chan bool)
-	go func ()  {
-		for d:= range messages {
+	go func() {
+		for d := range messages {
 			var payload TrackerPayload
 			_ = json.Unmarshal(d.Body, &payload)
 			go consumer.handlePayload(payload)
@@ -79,58 +79,63 @@ func (consumer *TrackerConsumer) Listen() error {
 	return nil
 }
 
-func (consumer *TrackerConsumer) handlePayload(payload TrackerPayload)  {
+func (consumer *TrackerConsumer) handlePayload(payload TrackerPayload) {
 	// insert data
-	if payload.Type == SearchType{
+	if payload.Type == SearchType {
 		trackerEntry := TrackerEntry{
-			Bid : payload.Bid,
-			Type : payload.Type,
-			Phone : payload.Phone,
-			Name : payload.Name,
-			Email : payload.Email,
-			UtmSource : payload.UtmSource,
-			UtmMedium : payload.UtmMedium,
-			UtmCampaignId : payload.UtmCampaignId,
-			UtmCampaignName : payload.UtmCampaignName,
-			Address : payload.Address,
-			IpAddress : payload.IpAddress,
-			City : payload.City,
-			CbSearchListSize : payload.CbSearchListSize,
-			GoSearchListSize : payload.GoSearchListSize,
-			TotalSearchListSize : payload.TotalSearchListSize,
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now().Unix(),
+			Bid:                 payload.Bid,
+			Type:                payload.Type,
+			Phone:               payload.Phone,
+			Name:                payload.Name,
+			Email:               payload.Email,
+			UtmSource:           payload.UtmSource,
+			UtmMedium:           payload.UtmMedium,
+			UtmCampaignId:       payload.UtmCampaignId,
+			UtmCampaignName:     payload.UtmCampaignName,
+			Address:             payload.Address,
+			IpAddress:           payload.IpAddress,
+			City:                payload.City,
+			CbSearchListSize:    payload.CbSearchListSize,
+			GoSearchListSize:    payload.GoSearchListSize,
+			TotalSearchListSize: payload.TotalSearchListSize,
+			CreatedAt:           time.Now(),
+			UpdatedAt:           time.Now().Unix(),
 		}
 		err := consumer.insertSearchEntry(trackerEntry)
 		if err != nil {
 			log.Printf("TrackerConsumer insertSearchEntry error %s", err)
 			return
 		}
-	}else if payload.Type == CWType {
+	} else if payload.Type == CWType {
 		trackerEntry := TrackerEntry{
-			Bid : payload.Bid,
-			Type : payload.Type,
-			Phone : payload.Phone,
-			Name : payload.Name,
-			Email : payload.Email,
-			UtmSource : payload.UtmSource,
-			UtmMedium : payload.UtmMedium,
-			UtmCampaignId : payload.UtmCampaignId,
-			UtmCampaignName : payload.UtmCampaignName,
-			Lat : payload.Lat,
-			Lng : payload.Lng,
-			FloorNumber : payload.FloorNumber,
-			TotalPrice : payload.TotalPrice,
-			PricePerSqFt : payload.PricePerSqFt,
-			AreaInSqft : payload.AreaInSqft,
-			Address : payload.Address,
-			IpAddress : payload.IpAddress,
-			City : payload.City,
-			CbSearchListSize : payload.CbSearchListSize,
-			GoSearchListSize : payload.GoSearchListSize,
-			TotalSearchListSize : payload.TotalSearchListSize,
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now().Unix(),
+			Bid:                 payload.Bid,
+			Type:                payload.Type,
+			Phone:               payload.Phone,
+			Name:                payload.Name,
+			Email:               payload.Email,
+			UtmSource:           payload.UtmSource,
+			UtmMedium:           payload.UtmMedium,
+			UtmCampaignId:       payload.UtmCampaignId,
+			UtmCampaignName:     payload.UtmCampaignName,
+			Lat:                 payload.Lat,
+			Lng:                 payload.Lng,
+			FloorNumber:         payload.FloorNumber,
+			ClicworthPrice:      payload.ClicworthPrice,
+			LowClicworthPrice:   payload.LowClicworthPrice,
+			HighClicworthPrice:  payload.HighClicworthPrice,
+			ConfidenceLevel:     payload.ConfidenceLevel,
+			IsGoogleSearch:      payload.IsGoogleSearch,
+			CBProjectId:         payload.CBProjectId,
+			PricePerSqFt:        payload.PricePerSqFt,
+			AreaInSqft:          payload.AreaInSqft,
+			Address:             payload.Address,
+			IpAddress:           payload.IpAddress,
+			City:                payload.City,
+			CbSearchListSize:    payload.CbSearchListSize,
+			GoSearchListSize:    payload.GoSearchListSize,
+			TotalSearchListSize: payload.TotalSearchListSize,
+			CreatedAt:           time.Now(),
+			UpdatedAt:           time.Now().Unix(),
 		}
 		err := consumer.insertCWEntry(trackerEntry)
 		if err != nil {
@@ -140,34 +145,39 @@ func (consumer *TrackerConsumer) handlePayload(payload TrackerPayload)  {
 	}
 }
 
-func (consumer *TrackerConsumer) insertCWEntry(entry TrackerEntry) error {
+func (consumer *TrackerConsumer) insertCWEntry(payload TrackerEntry) error {
 	_, err := consumer.cwCollection.InsertOne(context.TODO(), TrackerEntry{
-		Bid : entry.Bid,
-		Type : entry.Type,
-		Phone : entry.Phone,
-		Name : entry.Name,
-		Email : entry.Email,
-		UtmSource : entry.UtmSource,
-		UtmMedium : entry.UtmMedium,
-		UtmCampaignId : entry.UtmCampaignId,
-		UtmCampaignName : entry.UtmCampaignName,
-		Lat : entry.Lat,
-		Lng : entry.Lng,
-		FloorNumber : entry.FloorNumber,
-		TotalPrice : entry.TotalPrice,
-		PricePerSqFt : entry.PricePerSqFt,
-		AreaInSqft : entry.AreaInSqft,
-		Address : entry.Address,
-		IpAddress : entry.IpAddress,
-		City : entry.City,
-		CbSearchListSize : entry.CbSearchListSize,
-		GoSearchListSize : entry.GoSearchListSize,
-		TotalSearchListSize : entry.TotalSearchListSize,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now().Unix(),
+		Bid:                 payload.Bid,
+		Type:                payload.Type,
+		Phone:               payload.Phone,
+		Name:                payload.Name,
+		Email:               payload.Email,
+		UtmSource:           payload.UtmSource,
+		UtmMedium:           payload.UtmMedium,
+		UtmCampaignId:       payload.UtmCampaignId,
+		UtmCampaignName:     payload.UtmCampaignName,
+		Lat:                 payload.Lat,
+		Lng:                 payload.Lng,
+		FloorNumber:         payload.FloorNumber,
+		ClicworthPrice:      payload.ClicworthPrice,
+		LowClicworthPrice:   payload.LowClicworthPrice,
+		HighClicworthPrice:  payload.HighClicworthPrice,
+		ConfidenceLevel:     payload.ConfidenceLevel,
+		IsGoogleSearch:      payload.IsGoogleSearch,
+		CBProjectId:         payload.CBProjectId,
+		PricePerSqFt:        payload.PricePerSqFt,
+		AreaInSqft:          payload.AreaInSqft,
+		Address:             payload.Address,
+		IpAddress:           payload.IpAddress,
+		City:                payload.City,
+		CbSearchListSize:    payload.CbSearchListSize,
+		GoSearchListSize:    payload.GoSearchListSize,
+		TotalSearchListSize: payload.TotalSearchListSize,
+		CreatedAt:           time.Now(),
+		UpdatedAt:           time.Now().Unix(),
 	})
 	if err != nil {
-		log.Println("Error inserting into insertCWEntry: ",err)
+		log.Println("Error inserting into insertCWEntry: ", err)
 		return err
 	}
 
@@ -175,40 +185,40 @@ func (consumer *TrackerConsumer) insertCWEntry(entry TrackerEntry) error {
 }
 
 func (consumer *TrackerConsumer) insertSearchEntry(entry TrackerEntry) error {
-	filter := bson.D{{Key:"bid", Value:entry.Bid}}
-	filter = append(filter, bson.E{Key: "updated_at",Value: bson.D{
-			{Key: "$gte",Value: time.Now().Unix() - 20}, 
-		}},)
+	filter := bson.D{{Key: "bid", Value: entry.Bid}}
+	filter = append(filter, bson.E{Key: "updated_at", Value: bson.D{
+		{Key: "$gte", Value: time.Now().Unix() - 20},
+	}})
 
 	var result TrackerEntry
 	err := consumer.searchCollection.FindOne(context.TODO(), filter).Decode(&result)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			_, err = consumer.searchCollection.InsertOne(context.TODO(), TrackerEntry{
-				Bid : entry.Bid,
-				Type : entry.Type,
-				Phone : entry.Phone,
-				Name : entry.Name,
-				Email : entry.Email,
-				UtmSource : entry.UtmSource,
-				UtmMedium : entry.UtmMedium,
-				UtmCampaignId : entry.UtmCampaignId,
-				UtmCampaignName : entry.UtmCampaignName,
-				Address : entry.Address,
-				IpAddress : entry.IpAddress,
-				City : entry.City,
-				CbSearchListSize : entry.CbSearchListSize,
-				GoSearchListSize : entry.GoSearchListSize,
-				TotalSearchListSize : entry.TotalSearchListSize,
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now().Unix(),
+				Bid:                 entry.Bid,
+				Type:                entry.Type,
+				Phone:               entry.Phone,
+				Name:                entry.Name,
+				Email:               entry.Email,
+				UtmSource:           entry.UtmSource,
+				UtmMedium:           entry.UtmMedium,
+				UtmCampaignId:       entry.UtmCampaignId,
+				UtmCampaignName:     entry.UtmCampaignName,
+				Address:             entry.Address,
+				IpAddress:           entry.IpAddress,
+				City:                entry.City,
+				CbSearchListSize:    entry.CbSearchListSize,
+				GoSearchListSize:    entry.GoSearchListSize,
+				TotalSearchListSize: entry.TotalSearchListSize,
+				CreatedAt:           time.Now(),
+				UpdatedAt:           time.Now().Unix(),
 			})
 			if err != nil {
-				log.Println("Error inserting user search entry: ",err)
+				log.Println("Error inserting user search entry: ", err)
 				return err
 			}
 		}
-	}else {
+	} else {
 		newFilter := bson.D{{Key: "_id", Value: result.ID}}
 		update := bson.D{{Key: "$set", Value: bson.D{
 			{Key: "address", Value: entry.Address},
@@ -219,7 +229,7 @@ func (consumer *TrackerConsumer) insertSearchEntry(entry TrackerEntry) error {
 		}}}
 		_, err := consumer.searchCollection.UpdateOne(context.TODO(), newFilter, update)
 		if err != nil {
-			log.Println("Error Updating user search entry: ",err)
+			log.Println("Error Updating user search entry: ", err)
 			return err
 		}
 	}
