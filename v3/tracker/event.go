@@ -11,27 +11,32 @@ var CWType string = "tracker.user.cw"
 var SearchType string = "tracker.user.search"
 
 type TrackerPayload struct {
-	Bid                 string  `json:"bid"`
-	Type                string  `json:"type"`
-	Phone               string  `json:"phone"`
-	Name                string  `json:"name"`
-	Email               string  `json:"email"`
-	UtmSource           string  `json:"utm_source"`
-	UtmMedium           string  `json:"utm_medium"`
-	UtmCampaignId       string  `json:"utm_campaign_id"`
-	UtmCampaignName     string  `json:"utm_campaign_name"`
-	Lat                 float64 `json:"lat,omitempty"`
-	Lng                 float64 `json:"lng,omitempty"`
+	Bid                 string  `json:"bid,omitempty"`
+	Type                string  `json:"type,omitempty"`
+	Phone               string  `json:"phone,omitempty"`
+	Name                string  `json:"name,omitempty"`
+	Email               string  `json:"email,omitempty"`
+	UtmSource           string  `json:"utm_source,omitempty"`
+	UtmMedium           string  `json:"utm_medium,omitempty"`
+	UtmCampaignId       string  `json:"utm_campaign_id,omitempty"`
+	UtmCampaignName     string  `json:"utm_campaign_name,omitempty"`
+	Lat                 float64 `json:"lat,omitempty,omitempty"`
+	Lng                 float64 `json:"lng,omitempty,omitempty"`
 	FloorNumber         int32   `json:"floorNumber,omitempty"`
-	TotalPrice          int32   `json:"totalPrice,omitempty"`
 	PricePerSqFt        int32   `json:"pricePerSqFt,omitempty"`
 	AreaInSqft          int32   `json:"areaInSqft,omitempty"`
-	Address             string  `json:"address"`
-	IpAddress           string  `json:"ipAddress"`
-	City                string  `json:"city"`
-	CbSearchListSize    string  `json:"cb_search_list_size"`
-	GoSearchListSize    string  `json:"go_search_list_size"`
-	TotalSearchListSize string  `json:"total_search_list_size"`
+	Address             string  `json:"address,omitempty"`
+	IpAddress           string  `json:"ipAddress,omitempty"`
+	City                string  `json:"city,omitempty"`
+	CbSearchListSize    string  `json:"cb_search_list_size,omitempty"`
+	GoSearchListSize    string  `json:"go_search_list_size,omitempty"`
+	TotalSearchListSize string  `json:"total_search_list_size,omitempty"`
+	ClicworthPrice      int32   `json:"clicworthPrice,omitempty"`
+	LowClicworthPrice   int32   `json:"lowClicworthPrice,omitempty"`
+	HighClicworthPrice  int32   `json:"highClicworthPrice,omitempty"`
+	ConfidenceLevel     string  `json:"confidenceLevel,omitempty"`
+	IsGoogleSearch      bool    `json:"isGoogleSearch,omitempty"`
+	CBProjectId         string  `json:"cbprojectid,omitempty"`
 }
 
 type TrackerPublisher struct {
@@ -60,9 +65,14 @@ type TrackerEntry struct {
 	Lat                 float64   `bson:"lat,omitempty" json:"lat,omitempty"`
 	Lng                 float64   `bson:"lng,omitempty" json:"lng,omitempty"`
 	FloorNumber         int32     `bson:"floorNumber,omitempty" json:"floorNumber,omitempty"`
-	TotalPrice          int32     `bson:"totalPrice,omitempty" json:"totalPrice,omitempty"`
 	PricePerSqFt        int32     `bson:"pricePerSqFt,omitempty" json:"pricePerSqFt,omitempty"`
 	AreaInSqft          int32     `bson:"areaInSqft,omitempty" json:"areaInSqft,omitempty"`
+	ClicworthPrice      int32     `bson:"clicworthPrice,omitempty" json:"clicworthPrice,omitempty"`
+	LowClicworthPrice   int32     `bson:"lowClicworthPrice,omitempty" json:"lowClicworthPrice,omitempty"`
+	HighClicworthPrice  int32     `bson:"highClicworthPrice,omitempty" json:"highClicworthPrice,omitempty"`
+	ConfidenceLevel     string    `bson:"confidenceLevel,omitempty" json:"confidenceLevel,omitempty"`
+	IsGoogleSearch      bool      `bson:"isGoogleSearch,omitempty" json:"isGoogleSearch,omitempty"`
+	CBProjectId         string    `bson:"cbprojectid,omitempty" json:"cbprojectid,omitempty"`
 	Address             string    `bson:"address,omitempty" json:"address,omitempty"`
 	IpAddress           string    `bson:"ip_address,omitempty" json:"ip_address,omitempty"`
 	City                string    `bson:"city,omitempty" json:"city,omitempty"`
@@ -71,12 +81,6 @@ type TrackerEntry struct {
 	TotalSearchListSize string    `bson:"total_search_list_size,omitempty" json:"total_search_list_size,omitempty"`
 	UpdatedAt           int64     `bson:"updated_at,omitempty" json:"updated_at,omitempty"`
 	CreatedAt           time.Time `bson:"created_at,omitempty" json:"created_at,omitempty"`
-	ConfidenceLevel     string    `bson:"confidenceLevel,omitempty" json:"confidenceLevel,omitempty"`
-	IsGoogleSearch      bool      `bson:"isGoogleSearch,omitempty" json:"isGoogleSearch,omitempty"`
-	CBProjectId         string    `bson:"cbprojectid,omitempty" json:"cbprojectid,omitempty"`
-	ClicworthPrice      int32     `bson:"clicworthPrice,omitempty" json:"clicworthPrice,omitempty"`
-	LowClicworthPrice   int32     `bson:"lowClicworthPrice,omitempty" json:"lowClicworthPrice,omitempty"`
-	HighClicworthPrice  int32     `bson:"highClicworthPrice,omitempty" json:"highClicworthPrice,omitempty"`
 }
 
 func setup(conn *amqp.Connection) error {
