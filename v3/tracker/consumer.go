@@ -19,6 +19,7 @@ func NewConsumer(conn *amqp.Connection, mongo *mongo.Client) (TrackerConsumer, e
 		database:         mongo.Database("tracker"),
 		searchCollection: mongo.Database("tracker").Collection("search"),
 		cwCollection:     mongo.Database("tracker").Collection("clicworth"),
+		txCollection:     mongo.Database("tracker").Collection("txerrors"),
 	}
 
 	err := setup(consumer.connection)
@@ -30,7 +31,7 @@ func NewConsumer(conn *amqp.Connection, mongo *mongo.Client) (TrackerConsumer, e
 }
 
 func (consumer *TrackerConsumer) Listen() error {
-	topics := []string{CWType, SearchType}
+	topics := []string{CWType, SearchType, TxType}
 	ch, err := consumer.connection.Channel()
 	if err != nil {
 		log.Printf("TrackerConsumer channel error %s", err)
@@ -67,9 +68,15 @@ func (consumer *TrackerConsumer) Listen() error {
 	forever := make(chan bool)
 	go func() {
 		for d := range messages {
-			var payload TrackerPayload
-			_ = json.Unmarshal(d.Body, &payload)
-			go consumer.handlePayload(payload)
+			if d.RoutingKey == TxType {
+				var payload TxTracker
+				_ = json.Unmarshal(d.Body, &payload)
+				go consumer.handleTxPayload(payload)
+			} else {
+				var payload TrackerPayload
+				_ = json.Unmarshal(d.Body, &payload)
+				go consumer.handlePayload(payload)
+			}
 		}
 	}()
 
@@ -77,6 +84,13 @@ func (consumer *TrackerConsumer) Listen() error {
 	<-forever
 
 	return nil
+}
+
+func (consumer *TrackerConsumer) handleTxPayload(payload TxTracker) {
+	_, err := consumer.txCollection.InsertOne(context.TODO(), payload)
+	if err != nil {
+		log.Println("Error inserting into insertTxEntry: ", err)
+	}
 }
 
 func (consumer *TrackerConsumer) handlePayload(payload TrackerPayload) {

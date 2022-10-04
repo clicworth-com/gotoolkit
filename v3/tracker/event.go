@@ -9,6 +9,7 @@ import (
 
 var CWType string = "tracker.user.cw"
 var SearchType string = "tracker.user.search"
+var TxType string = "tracker.tx.error"
 
 type TrackerPayload struct {
 	Bid                 string  `json:"bid,omitempty"`
@@ -20,8 +21,8 @@ type TrackerPayload struct {
 	UtmMedium           string  `json:"utm_medium,omitempty"`
 	UtmCampaignId       string  `json:"utm_campaign_id,omitempty"`
 	UtmCampaignName     string  `json:"utm_campaign_name,omitempty"`
-	Lat                 float64 `json:"lat,omitempty,omitempty"`
-	Lng                 float64 `json:"lng,omitempty,omitempty"`
+	Lat                 float64 `json:"lat,omitempty"`
+	Lng                 float64 `json:"lng,omitempty"`
 	FloorNumber         int32   `json:"floorNumber,omitempty"`
 	PricePerSqFt        int32   `json:"pricePerSqFt,omitempty"`
 	AreaInSqft          int32   `json:"areaInSqft,omitempty"`
@@ -49,6 +50,7 @@ type TrackerConsumer struct {
 	database         *mongo.Database
 	searchCollection *mongo.Collection
 	cwCollection     *mongo.Collection
+	txCollection     *mongo.Collection
 }
 
 type TrackerEntry struct {
@@ -81,6 +83,27 @@ type TrackerEntry struct {
 	TotalSearchListSize string    `bson:"total_search_list_size,omitempty" json:"total_search_list_size,omitempty"`
 	UpdatedAt           int64     `bson:"updated_at,omitempty" json:"updated_at,omitempty"`
 	CreatedAt           time.Time `bson:"created_at,omitempty" json:"created_at,omitempty"`
+}
+
+type TxTracker struct {
+	IP                      string   `bson:"ip,omitempty" json:"ip,omitempty"`
+	BID                     string   `bson:"bid,omitempty" json:"bid,omitempty"`
+	UserId                  string   `bson:"userid,omitempty" json:"userid,omitempty"`
+	UserTodayTxFetchCount   int32    `bson:"usertodaytxfetchcount,omitempty" json:"usertodaytxfetchcount,omitempty"`
+	UserTotalTxFetchCount   int32    `bson:"usertotaltxfetchcount,omitempty" json:"usertotaltxfetchcount,omitempty"`
+	IPTodayTxFetchCount     int32    `bson:"iptodaytxfetchcount,omitempty" json:"iptodaytxfetchcount,omitempty"`
+	IPTotalTxFetchCount     int32    `bson:"iptotaltxfetchcount,omitempty" json:"iptotaltxfetchcount,omitempty"`
+	UserDayLimitReached     bool     `bson:"userdaylimitreached,omitempty" json:"userdaylimitreached,omitempty"`
+	UserDayLimitReachedDate int64    `bson:"userdaylimitreacheddate,omitempty" json:"userdaylimitreacheddate,omitempty"`
+	IPDayLimitReached       bool     `bson:"ipdaylimitreached,omitempty" json:"ipdaylimitreached,omitempty"`
+	IPDayLimitReachedDate   [3]int64 `bson:"ipdaylimitreacheddate,omitempty" json:"ipdaylimitreacheddate,omitempty"`
+	UserBlocked             bool     `bson:"userblocked,omitempty" json:"userblocked,omitempty"`
+	IPBlocked               bool     `bson:"ipblocked,omitempty" json:"ipblocked,omitempty"`
+	UpdatedAt               int64    `bson:"updated_at,omitempty" json:"updated_at,omitempty"`
+	CreatedAt               int64    `bson:"created_at,omitempty" json:"created_at,omitempty"`
+	UserBlockedAt           int64    `bson:"userblocked_at,omitempty" json:"userblocked_at,omitempty"`
+	IPBlockedAt             int64    `bson:"ipblocked_at,omitempty" json:"ipblocked_at,omitempty"`
+	Remarks                 string   `bson:"remarks,omitempty" json:"remarks,omitempty"`
 }
 
 func setup(conn *amqp.Connection) error {
