@@ -9,6 +9,8 @@ message Predict{
     double lng = 2;
     int32 floorNumber = 3;
     int32 registryYear = 4;
+    int32 registryMonth = 5;
+    string city = 6;
 }
 
 message PredictRequest {
