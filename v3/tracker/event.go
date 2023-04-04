@@ -104,6 +104,7 @@ type TxTracker struct {
 	UserBlockedAt           int64    `bson:"userblocked_at,omitempty" json:"userblocked_at,omitempty"`
 	IPBlockedAt             int64    `bson:"ipblocked_at,omitempty" json:"ipblocked_at,omitempty"`
 	Remarks                 string   `bson:"remarks,omitempty" json:"remarks,omitempty"`
+	IPTodayAddressFetchCount     int32    `bson:"iptodayaddressfetchcount,omitempty" json:"iptodayaddressfetchcount,omitempty"`
 }
 
 func setup(conn *amqp.Connection) error {
